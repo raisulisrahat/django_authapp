@@ -1,9 +1,7 @@
+# views.py
+
 from itertools import repeat
-
-from django.shortcuts import render
-
-# Create your views here.
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -12,19 +10,74 @@ from django.conf import settings
 from django.core.mail import EmailMessage
 from django.utils import timezone
 from django.urls import reverse
-from .models import *
-from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from django.shortcuts import get_object_or_404
+from .models import PasswordReset
+from .forms import UserUpdateForm, ProfileUpdateForm
+from django.contrib.auth.password_validation import validate_password
+from django.shortcuts import render, redirect
+from django.contrib.auth import update_session_auth_hash
 
 
+# Custom 404 handler view
 def custom_404_view(request, exception=None):
     return render(request, '404.html', status=404)
+
+# Home/profile page for authenticated users
+# Profile view to update user info and profile picture
 @login_required
 def Home(request):
-    return render(request, 'profile.html')
+    # Check if the user has a profile
+    if not hasattr(request.user, 'profile'):
+        messages.error(request, "Your profile does not exist. Please complete your registration.")
+        return redirect('register')  # Redirect to the registration or profile creation page
 
+    if request.method == 'POST':
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        p_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
 
+        if u_form.is_valid() and p_form.is_valid():
+            u_form.save()
+            p_form.save()
+            messages.success(request, 'Your profile has been updated successfully!')
+            return redirect('home')  # Redirect to the home view after successful update
+    else:
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = ProfileUpdateForm(instance=request.user.profile)
+
+    context = {
+        'u_form': u_form,
+        'p_form': p_form
+    }
+
+    return render(request, 'profile.html', context)  # Ensure this return statement is present
+
+@login_required
+def EditProfle(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        new_password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+
+        # Update email
+        request.user.email = email
+        request.user.save()
+
+        # Handle password change if new password is provided
+        if new_password:
+            if new_password == confirm_password:
+                request.user.set_password(new_password)
+                request.user.save()
+                update_session_auth_hash(request, request.user)  # Important to keep the user logged in
+                messages.success(request, 'Your settings have been updated.')
+            else:
+                messages.error(request, 'Passwords do not match.')
+        else:
+            messages.success(request, 'Your email has been updated.')
+
+        return redirect('settings')  # Redirect to settings page after updating
+
+    return render(request, 'edit_profile.html')
+# User registration view
 def Register(request):
     if request.method == "POST":
         full_name = request.POST.get('full_name')
@@ -33,88 +86,105 @@ def Register(request):
         password = request.POST.get('password')
         repeat_password = request.POST.get('repeat_password')
 
+        # Error flag for validation
         user_data_has_error = False
 
+        # Check if username is already taken
         if User.objects.filter(username=username).exists():
             messages.error(request, "Username already exists")
-            return redirect('register')
+            user_data_has_error = True
 
+        # Check if email is already registered
         if User.objects.filter(email=email).exists():
             messages.error(request, "Email already exists")
-            return redirect('register')
+            user_data_has_error = True
 
-        if len(password) < 6:
+        # Validate password length and matching
+        if password != repeat_password:
+            messages.error(request, "Passwords do not match")
+            user_data_has_error = True
+        elif len(password) < 6:
             messages.error(request, "Password must be at least 6 characters")
-            return redirect('register')
+            user_data_has_error = True
 
         if user_data_has_error:
             return redirect('register')
+
+        # Create new user if no errors
         else:
             new_user = User.objects.create_user(
-                full_name=full_name,
-                email=email,
                 username=username,
-                password=password,
-                repeat_password=repeat_password,
+                email=email,
+                password=password
             )
-            messages.success(request, "Account created. Login now")
+            new_user.first_name = full_name
+            new_user.save()
+
+            messages.success(request, "Account created successfully. You can now login.")
             return redirect('login')
 
     return render(request, 'register.html')
 
-
+# User login view
 def Login(request):
     if request.method == "POST":
         username = request.POST.get("username")
         password = request.POST.get("password")
 
+        # Authenticate user
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
             login(request, user)
 
-            return redirect('home')
+            # Check if the user has a profile
+            if not hasattr(user, 'profile'):
+                messages.error(request, "Your profile does not exist. Please complete your registration.")
+                return redirect('register')  # Redirect to profile creation or registration page
 
+            return redirect('home')  # Redirect to home if login is successful
         else:
             messages.error(request, "Invalid login credentials")
             return redirect('login')
 
     return render(request, 'login.html')
-
-
+# User logout view
+@login_required
 def Logout(request):
     logout(request)
-
     return redirect('login')
 
-
+# Forgot password view
 def Forgot(request):
     if request.method == "POST":
         email = request.POST.get('email')
 
         try:
+            # Find the user by email
             user = User.objects.get(email=email)
 
+            # Create a password reset request
             new_password_reset = PasswordReset(user=user)
             new_password_reset.save()
 
+            # Generate password reset URL
             password_reset_url = reverse('password-reset', kwargs={'reset_id': new_password_reset.reset_id})
-
             full_password_reset_url = f'{request.scheme}://{request.get_host()}{password_reset_url}'
 
-            email_body = f'Reset your password using the link below:\n\n\n{full_password_reset_url}'
-
+            # Send password reset email
+            email_body = f'Reset your password using the link below:\n\n{full_password_reset_url}'
             email_message = EmailMessage(
-                'Reset your password',  # email subject
+                'Reset your password',
                 email_body,
-                settings.EMAIL_HOST_USER,  # email sender
-                [email]  # email  receiver
+                settings.EMAIL_HOST_USER,
+                [email]
             )
 
             email_message.fail_silently = True
             email_message.send()
 
-            return redirect('password-reset-sent', reset_id=new_password_reset.reset_id)
+            messages.success(request, f"Password reset link has been sent to {email}.")
+            return redirect('login')
 
         except User.DoesNotExist:
             messages.error(request, f"No user with email '{email}' found")
@@ -122,16 +192,18 @@ def Forgot(request):
 
     return render(request, 'forgot_password.html')
 
-
+# Password reset view (handle reset link)
 def PasswordReset(request, reset_id):
-    # This will raise a 404 error if the reset_id does not exist
+    # Check if the reset request is valid or expired
     password_reset = get_object_or_404(PasswordReset, reset_id=reset_id)
 
-    return render(request, 'password_reset.html')
+    return render(request, 'password_reset.html', {'reset_id': reset_id})
 
+# Change password view (after clicking reset link)
 def ChangePassword(request, reset_id):
     try:
-        password_reset_id = PasswordReset.objects.get(reset_id=reset_id)
+        # Validate password reset request
+        password_reset = get_object_or_404(PasswordReset, reset_id=reset_id)
 
         if request.method == "POST":
             password = request.POST.get('password')
@@ -139,41 +211,44 @@ def ChangePassword(request, reset_id):
 
             passwords_have_error = False
 
+            # Check if passwords match
             if password != confirm_password:
                 passwords_have_error = True
                 messages.error(request, 'Passwords do not match')
 
+            # Check password length and strength
             if len(password) < 6:
                 passwords_have_error = True
                 messages.error(request, 'Password must be at least 6 characters long')
 
-            expiration_time = password_reset_id.created_when + timezone.timedelta(minutes=10)
+            try:
+                # Validate password using Django's password validators
+                validate_password(password)
+            except ValidationError as e:
+                passwords_have_error = True
+                messages.error(request, e.messages)
 
+            # Check if the reset link has expired (valid for 10 minutes)
+            expiration_time = password_reset.created_when + timezone.timedelta(minutes=10)
             if timezone.now() > expiration_time:
                 passwords_have_error = True
                 messages.error(request, 'Reset link has expired')
-
-                password_reset_id.delete()
+                password_reset.delete()
 
             if not passwords_have_error:
-                user = password_reset_id.user
+                # Update user's password
+                user = password_reset.user
                 user.set_password(password)
                 user.save()
 
-                password_reset_id.delete()
+                # Delete the reset request after successful password change
+                password_reset.delete()
 
-                messages.success(request, 'Password reset. Proceed to login')
+                messages.success(request, 'Password reset successfully. You can now login.')
                 return redirect('login')
-            else:
-                # redirect back to password reset page and display errors
-                return redirect('password-reset', reset_id=reset_id)
 
+        return render(request, 'password_reset.html', {'reset_id': reset_id})
 
     except PasswordReset.DoesNotExist:
-
-        # redirect to forgot password page if code does not exist
-        messages.error(request, 'Invalid reset id')
+        messages.error(request, 'Invalid or expired reset link')
         return redirect('forgot-password')
-
-    return render(request, 'password_reset.html')
-

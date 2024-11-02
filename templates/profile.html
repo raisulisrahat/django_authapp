@@ -1,10 +1,27 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% load bootstrap5 %}
+{% load static %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-4">
+            <h2>Profile</h2>
+            {% if user.profile.profile_picture %}
+            <img src="{{ user.profile.profile_picture.url }}" alt="{{ user.username }}" class="img-thumbnail" style="width: 150px; height: 150px;">
+            {% else %}
+            <img src="{% static 'profile_pics/38269.JPG' %}" alt="Default Profile" class="img-thumbnail" style="width: 150px; height: 150px;">
+            {% endif %}
+        </div>
 
-</body>
-</html>
+        <div class="col-md-8">
+            <h2>Edit Profile</h2>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% bootstrap_form u_form %}
+                {% bootstrap_form p_form %}
+                <button type="submit" class="btn btn-primary mt-3">Update Profile</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
