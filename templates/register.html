@@ -1,0 +1,95 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    
+    <!-- Load Bootstrap and Static CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+    
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row h-100">
+            <!-- Left Section -->
+            <div class="col-md-6 login-left d-none d-md-flex">
+                <div class="text-center">
+                    <!-- Replace with your logo path -->
+                    <img src="{% static 'image/CTS.png' %}" alt="Logo">
+                    <h2>Application <br> Register Page</h2>
+                    <p>Login or register from here to access.</p>
+                </div>
+            </div>
+            {% if messages %}
+                {% for message in messages %}
+                    {% if message.tags == 'error' %}
+                        <h4 style="color: firebrick;" class="text-center">{{message}}</h4>
+                    {% else %}
+                        <h4 style="color: dodgerblue;" class="text-center">{{message}}</h4>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+            <!-- Right Section -->
+            <div class="col-md-6 login-right">
+                <div class="form-container">
+                    <form method="POST" action="{% url 'register' %}">
+                        {% csrf_token %}
+                        
+                        <div class="mb-4">
+                            <h3 class="text-center">Create an account</h3>
+                        </div>
+                        
+                        <!-- Full Name input -->
+                        <div class="form-outline mb-4">
+{#                            <label class="form-label" for="fullname">Full Name</label>#}
+                            <input type="text" id="fullname" placeholder="Your Full Name" name="fullname" class="form-control" required />
+                        </div>
+
+                        <!-- Email input -->
+                        <div class="form-outline mb-4">
+{#                            <label class="form-label" for="email">Email</label>#}
+                            <input type="email" id="email" placeholder="Your Email" name="email" class="form-control" required />
+                        </div>
+
+                        <!-- Username input -->
+                        <div class="form-outline mb-4">
+{#                            <label class="form-label" for="username">Username</label>#}
+                            <input type="text" id="username" placeholder="Your Username" name="username" class="form-control" required />
+                        </div>
+                        
+                        <!-- Password input -->
+                        <div class="form-outline mb-4">
+{#                            <label class="form-label" for="password">Password</label>#}
+                            <input type="password" id="password" placeholder="Your Password" name="password" class="form-control" required />
+                        </div>
+
+                        <!-- Confirm Password input -->
+                        <div class="form-outline mb-4">
+{#                            <label class="form-label" for="confirm_password">Repeat Your Password</label>#}
+                            <input type="password" id="confirm_password" placeholder="Repeat Your Password" name="confirm_password" class="form-control" required />
+                        </div>
+                        
+                        <!-- Agree to terms checkbox -->
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="terms" name="terms">
+                            <label class="form-check-label" for="terms"> I agree to all statements in <a href="#">Terms of service</a> </label>
+                        </div>
+                        
+                        <!-- Sign Up Button -->
+                        <div class="text-center">
+                            <input type="submit" value="Sign Up" class="btn btn-primary btn-block mb-4">
+                        </div>
+                        <!-- Already have an account link -->
+                        <div class="text-center">
+                            <p>Have already an account? <a href="{% url 'login' %}">Login here</a></p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

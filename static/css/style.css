@@ -1,0 +1,43 @@
+body {
+    height: 100vh;
+}
+.container-fluid {
+    height: 100%;
+}
+.login-left {
+    background-color: #2e7d66; /* Green background */
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+.login-left img {
+    max-width: 200px; /* Adjust this size for the logo */
+}
+.login-left h2 {
+    margin-top: 20px;
+    font-size: 2rem;
+    font-weight: bold;
+}
+.login-left p {
+    margin-top: 10px;
+    font-size: 1.2rem;
+}
+.login-right {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.form-container {
+    width: 100%;
+    max-width: 400px;
+}
+.form-control {
+    background-color: #f2f2f2;
+}
+.btn-primary {
+    background-color: #007bff;
+    border: none;
+}
