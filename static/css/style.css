@@ -4,7 +4,7 @@ body {
 .container-fluid {
     height: 100%;
 }
-.login-left {
+.left {
     background-color: #2e7d66; /* Green background */
     color: white;
     display: flex;
@@ -13,19 +13,19 @@ body {
     align-items: center;
     text-align: center;
 }
-.login-left img {
+.left img {
     max-width: 200px; /* Adjust this size for the logo */
 }
-.login-left h2 {
+.left h2 {
     margin-top: 20px;
     font-size: 2rem;
     font-weight: bold;
 }
-.login-left p {
+.left p {
     margin-top: 10px;
     font-size: 1.2rem;
 }
-.login-right {
+.right {
     display: flex;
     justify-content: center;
     align-items: center;

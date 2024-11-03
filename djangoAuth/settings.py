@@ -28,9 +28,11 @@ DEBUG = True
 # False
 # True
 
-# LOGIN_URL = 'login'
+LOGIN_URL = 'login'
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+
+
 
 
 # Application definition

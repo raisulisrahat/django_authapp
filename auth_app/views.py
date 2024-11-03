@@ -11,12 +11,12 @@ from django.core.mail import EmailMessage
 from django.utils import timezone
 from django.urls import reverse
 from django.core.exceptions import ValidationError
-from .models import PasswordReset
 from .forms import UserUpdateForm, ProfileUpdateForm
 from django.contrib.auth.password_validation import validate_password
 from django.shortcuts import render, redirect
 from django.contrib.auth import update_session_auth_hash
-
+from auth_app.models import PasswordReset  # Make sure to import your PasswordReset model
+import uuid
 
 # Custom 404 handler view
 def custom_404_view(request, exception=None):
@@ -155,6 +155,7 @@ def Logout(request):
     return redirect('login')
 
 # Forgot password view
+# Forgot password view
 def Forgot(request):
     if request.method == "POST":
         email = request.POST.get('email')
@@ -164,7 +165,8 @@ def Forgot(request):
             user = User.objects.get(email=email)
 
             # Create a password reset request
-            new_password_reset = PasswordReset(user=user)
+            # Make sure you're passing the correct field expected by the PasswordReset model
+            new_password_reset = PasswordReset(user=user)  # Adjust this based on your model
             new_password_reset.save()
 
             # Generate password reset URL
@@ -191,6 +193,8 @@ def Forgot(request):
             return redirect('forgot-password')
 
     return render(request, 'forgot_password.html')
+
+
 
 # Password reset view (handle reset link)
 def PasswordReset(request, reset_id):

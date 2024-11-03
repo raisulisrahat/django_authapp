@@ -7,7 +7,6 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 
-
 # Profile model for user details and profile picture
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -26,10 +25,18 @@ def create_or_update_user_profile(sender, instance, created, **kwargs):
     instance.profile.save()  # This should be used for updates, not creation.
 
 # Password reset model
-class PasswordReset(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    reset_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
-    created_when = models.DateTimeField(auto_now_add=True)
+# class PasswordReset(models.Model):
+#     user = models.ForeignKey(User, on_delete=models.CASCADE)
+#     reset_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     # Add other fields as necessary (like an expiration timestamp)
+#
+#     def __str__(self):
+#         return f'Password reset for {self.user.email}'
 
-    def __str__(self):
-        return f"Password reset for {self.user.username} at {self.created_when}"
+class PasswordReset(models.Model):
+    reset_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    # You could also add an expiration field or any other relevant field
+    is_active = models.BooleanField(default=True)  # To track if the reset link is still valid
