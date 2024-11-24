@@ -9,7 +9,7 @@
             {% if user.profile.profile_picture %}
             <img src="{{ user.profile.profile_picture.url }}" alt="{{ user.username }}" class="img-thumbnail" style="width: 150px; height: 150px;">
             {% else %}
-            <img src="{% static 'profile_pics/38269.JPG' %}" alt="Default Profile" class="img-thumbnail" style="width: 150px; height: 150px;">
+            <img src="{% static 'profile_pics/' %}" alt="Default Profile" class="img-thumbnail" style="width: 150px; height: 150px;">
             {% endif %}
         </div>
 

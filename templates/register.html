@@ -23,18 +23,19 @@
                     <p>Login or register from here to access.</p>
                 </div>
             </div>
-            {% if messages %}
-                {% for message in messages %}
-                    {% if message.tags == 'error' %}
-                        <h4 style="color: firebrick;" class="text-center">{{message}}</h4>
-                    {% else %}
-                        <h4 style="color: dodgerblue;" class="text-center">{{message}}</h4>
-                    {% endif %}
-                {% endfor %}
-            {% endif %}
             <!-- Right Section -->
             <div class="col-md-6 right">
+
                 <div class="form-container">
+                    {% if messages %}
+                        {% for message in messages %}
+                            {% if message.tags == 'error' %}
+                                <h4 style="color: firebrick;" class="text-center">{{message}}</h4>
+                            {% else %}
+                                <h4 style="color: dodgerblue;" class="text-center">{{message}}</h4>
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
                     <form method="POST" action="{% url 'register' %}">
                         {% csrf_token %}
                         
